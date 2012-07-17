@@ -1,0 +1,97 @@
+<!DOCTYPE html> 
+<html>  
+  <head>
+    <title>Golf score keeper</title>
+    <script src="http://www.google.com/jsapi"></script>
+    <script>
+      google.load("jquery", "1.4.1");
+    </script>
+    <script>
+      var db = window.openDatabase("Thermometer", "", "", 1024*1000);
+
+      function insertScore(fname,lname, temp)  {
+       db.transaction(function(tx) {
+          tx.executeSql('INSERT INTO Contacts (fname, lname, temp) VALUES (?,?,?)', [ fname, lname, temp]);
+       });
+      }
+
+      $(document).ready(function() {
+        
+        db.transaction(function(tx) {
+          //tx.executeSql('Drop Table Contacts');
+        });
+        
+        db.transaction(function(tx) {
+          tx.executeSql('CREATE TABLE IF NOT EXISTS Contacts(id INTEGER PRIMARY KEY, fname Text, lname Text, temp Number )', []);
+        });
+        
+        renderContacts();
+
+        $('#score_form').submit(function() {
+          insertScore($('#fname').val(), 'jackson', 97.7);
+          renderContacts();
+          console.log('submit');
+          updateContact();
+          return false;
+        });
+        
+        
+         $('#temp_form').submit(function() {
+         
+          console.log('submit');
+          updateContact($('#fname').val(),$('#tempid').val());
+          return false;
+        });
+
+	    function renderContacts() {
+	       db.transaction(function(tx) {
+	          console.log('select all');
+	          tx.executeSql('SELECT * FROM Contacts', [], renderResults);
+	          
+	       });
+	    } 
+
+	    function updateContact(fname,temp) {
+	       db.transaction(function(tx) {
+	          console.log('update: '+fname);
+	          tx.executeSql('Update Contacts set temp='+temp+' where fname="'+fname+'"');
+	           renderContacts();
+	       });
+	    } 
+
+	    function renderResults(tx, rs) {
+	    	console.log('renderResults');
+		    e = $('#contacts');
+		    e.html("");
+		    for(var i=0; i < rs.rows.length; i++) {
+		       r = rs.rows.item(i);
+		       e.html(e.html() + 'id: ' + r['id'] + ', fname: ' + r['fname'] +  ', lname: ' + r['lname'] + ', temp: ' + r['temp'] +'<br />');
+		    }
+		}	            
+      });
+    </script>
+  </head>
+  <body>
+	<div id="contacts">
+
+    </div>
+	
+    <form method="get" id="score_form">
+		<div>
+        <input type="text" id="fname" size="40"/>
+      </div>
+      <div>
+        <input type="submit" value="Add Contact" />
+      </div>
+    </form>
+	
+	<form method="get" id="temp_form">
+		<div>
+        <input type="number" min="96" value="97" id="tempid" name="hole2" size="2" step="1" />
+      </div>
+      <div>
+        <input type="submit" value="Set temp" />
+      </div>
+    </form>
+  </body>
+</html> 
